@@ -1,15 +1,26 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken' 
 
+interface JwtPayload {
+  id: string
+  role: 'admin' | 'employee' | string
+}
 
-export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
+// Extend Express Request to carry the decoded user
+export interface AuthRequest extends Request {
+  user?: JwtPayload
+}
+
+
+export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction) => {
 	const token = (req as any).cookies?.token
 
 	if (!token) return res.status(401).json({ message: 'No token provided' })
 
 	const secret = process.env.JWT_SECRET || 'secretkey'
 	try {
-		const decoded = jwt.verify(token, secret)
+		const decoded = jwt.verify(token, secret) as JwtPayload
+		req.user = decoded
 		next()
 	} catch (err) {
 		return res.status(401).json({ message: 'Invalid token' })

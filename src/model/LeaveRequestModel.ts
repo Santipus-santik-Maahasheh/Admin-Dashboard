@@ -3,7 +3,7 @@ import { Schema, model } from 'mongoose';
 const leaveRequestSchema = new Schema({
   employee: { 
     type: Schema.Types.ObjectId, 
-    ref: 'Employee', 
+    ref: 'employee', 
     required: true 
   },
   leaveType: { 

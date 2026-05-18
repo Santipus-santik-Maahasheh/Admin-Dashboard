@@ -1,13 +1,19 @@
 import exp from 'express'
+import cookieParser from 'cookie-parser'
 import cors from 'cors'
-import { createEmployee } from './controller/EmployeeController'
+import { createEmployee, login } from './controller/BasicController'
 import {connectDB,disconnectDB} from './config/dbconfig'
+import { adminRouter } from './routes/Admin'
+import { empRouter } from './routes/Employee'
 
 const app=exp()
-app.use(cors())
+app.use(cors({ origin: true, credentials: true }))
 app.use(exp.json())
+app.use(cookieParser())
 app.post('/Register',createEmployee)
-
+app.post('/login',login)
+app.use('/admin',adminRouter)
+app.use('/employee',empRouter)
 
 let server:any;
 const PORT=process.env.port!

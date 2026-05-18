@@ -1,31 +1,92 @@
-import bcrypt from 'bcrypt';
-import { UserModel } from "../model/UserModel";
+import { LeaveRequestModel } from "../model/LeaveRequestModel";
+import { AttendanceModel } from "../model/AttendanceModel";
 
-const SALT_ROUNDS = 10;
-
-export const EmployeeCreation = async (userData: any): Promise<any> => {
-
-    if (!userData || typeof userData !== 'object') {
-        throw new Error("Invalid user data provided");
+export const applyLeave = async (employeeId: string, leaveData: any): Promise<any> => {
+    if (!leaveData || typeof leaveData !== 'object') {
+        throw new Error('Invalid leave data provided');
     }
 
-    if (!userData.password) {
-        throw new Error("Password is required");
+    const { leaveType, startDate, endDate, reason, totalDays } = leaveData;
+    if (!leaveType || !startDate || !endDate || !reason) {
+        throw new Error('leaveType, startDate, endDate, and reason are required');
     }
 
-    const existingUser = await UserModel.findOne({ email: userData.email });
-    if (existingUser) {
-        throw new Error("Email already exists");
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.valueOf()) || isNaN(end.valueOf()) || end < start) {
+        throw new Error('Invalid leave dates');
     }
 
-    const hashedPassword = await bcrypt.hash(userData.password, SALT_ROUNDS);
-    const userDoc = new UserModel({
-        ...userData,
-        password: hashedPassword,
+    const computedTotalDays = totalDays ?? Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    const leaveDoc = new LeaveRequestModel({
+        ...leaveData,
+        employee: employeeId,
+        startDate: start,
+        endDate: end,
+        totalDays: computedTotalDays,
     });
 
-    const savedEmployee = await userDoc.save();
-    const {password,...employeeObject} = savedEmployee.toObject();
+    return await leaveDoc.save();
+};
 
-    return employeeObject;
+export const viewLeave = async (employeeId: string): Promise<any[]> => {
+    return await LeaveRequestModel.find({ employee: employeeId });
+};
+
+export const markAttendance = async (employeeId: string, attendanceData: any): Promise<any> => {
+    if (!attendanceData || typeof attendanceData !== 'object') {
+        throw new Error('Invalid attendance data provided');
+    }
+
+    const { date, clockIn, clockOut, status } = attendanceData;
+    const attendanceDate = date ? new Date(date) : new Date();
+    if (isNaN(attendanceDate.valueOf())) {
+        throw new Error('Invalid attendance date');
+    }
+
+    const normalizedDate = new Date(attendanceDate);
+    normalizedDate.setHours(0, 0, 0, 0);
+
+    const clockInDate = clockIn ? new Date(clockIn) : new Date();
+    if (isNaN(clockInDate.valueOf())) {
+        throw new Error('Invalid clockIn time');
+    }
+
+    let clockOutDate: Date | undefined;
+    if (clockOut) {
+        clockOutDate = new Date(clockOut);
+        if (isNaN(clockOutDate.valueOf())) {
+            throw new Error('Invalid clockOut time');
+        }
+        if (clockOutDate < clockInDate) {
+            throw new Error('clockOut must be after clockIn');
+        }
+    }
+
+    const workHours = clockOutDate ? (clockOutDate.getTime() - clockInDate.getTime()) / (1000 * 60 * 60) : 0;
+
+    const existingRecord = await AttendanceModel.findOne({ employee: employeeId, date: normalizedDate });
+    if (existingRecord) {
+        existingRecord.clockIn = clockInDate;
+        existingRecord.clockOut = clockOutDate;
+        existingRecord.status = status || existingRecord.status;
+        existingRecord.workHours = workHours;
+        return await existingRecord.save();
+    }
+
+    const attendanceDoc = new AttendanceModel({
+        employee: employeeId,
+        date: normalizedDate,
+        clockIn: clockInDate,
+        clockOut: clockOutDate,
+        status: status || 'Present',
+        workHours,
+    });
+
+    return await attendanceDoc.save();
+};
+
+export const viewAttendance = async (employeeId: string): Promise<any[]> => {
+    return await AttendanceModel.find({ employee: employeeId }).sort({ date: -1 });
 };
