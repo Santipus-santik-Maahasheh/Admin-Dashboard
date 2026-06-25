@@ -3,8 +3,8 @@ import { Schema, model } from 'mongoose';
 const leaveRequestSchema = new Schema({
   employee: { 
     type: Schema.Types.ObjectId, 
-    ref: 'employee', 
-    required: true 
+    ref: 'Employee',
+    required: true
   },
   leaveType: { 
     type: String, 
@@ -27,4 +27,4 @@ const leaveRequestSchema = new Schema({
   rejectionReason: { type: String }
 }, { timestamps: true });
 
-export const LeaveRequestModel=model('leaveRequest',leaveRequestSchema)
+export const LeaveRequestModel=model('LeaveRequest',leaveRequestSchema)
