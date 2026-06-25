@@ -1,17 +1,25 @@
 import exp from 'express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
-import { createEmployee, login } from './controller/BasicController'
+import swaggerUi from 'swagger-ui-express'
 import {connectDB,disconnectDB} from './config/dbconfig'
+import { authRouter } from './routes/Auth'
 import { adminRouter } from './routes/Admin'
 import { empRouter } from './routes/Employee'
+import { swaggerSpec } from './config/swagger'
+import morgan from 'morgan'
 
 const app=exp()
+app.use(morgan('dev'))
 app.use(cors({ origin: true, credentials: true }))
 app.use(exp.json())
 app.use(cookieParser())
-app.post('/Register',createEmployee)
-app.post('/login',login)
+
+// API documentation (Swagger UI at /api-docs, raw spec at /api-docs.json)
+app.get('/api-docs.json', (_req, res) => res.json(swaggerSpec))
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+
+app.use('/auth',authRouter)
 app.use('/admin',adminRouter)
 app.use('/employee',empRouter)
 
@@ -23,7 +31,7 @@ const startServer = async () => {
   try {
     await connectDB();  
     server = app.listen(PORT, () => {
-      console.log(`⚡ Server listening on port ${PORT}`);
+      console.log(`⚡ Server listening on port ${PORT} : http://localhost:${PORT}`);
     });
   } catch (error) {
     console.error('💥 Failed to start server:', error);

@@ -3,7 +3,7 @@ import { Schema, model } from 'mongoose';
 const attendanceSchema = new Schema({
   employee: { 
     type: Schema.Types.ObjectId, 
-    ref: 'employee', 
+    ref: 'Employee',
     required: true 
   },
   date: { 
