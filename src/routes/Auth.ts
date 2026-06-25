@@ -1,6 +1,6 @@
 import { Router } from "express";
 import eah from "express-async-handler";
-import { createEmployee, login } from "../controller/AuthController";
+import { register, login } from "../controller/AuthController";
 
 export const authRouter = Router();
 
@@ -9,28 +9,35 @@ export const authRouter = Router();
  * /auth/register:
  *   post:
  *     tags: [Auth]
- *     summary: Register a new employee
- *     description: Creates an employee. The password is hashed and never returned.
+ *     summary: Register a new organization (company signup)
+ *     description: >
+ *       Public endpoint that creates a new tenant (Organization) together with
+ *       its owner Admin. The role is assigned server-side and cannot be set by
+ *       the client. Use POST /admin/employees to add further users to the org.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/CreateEmployeeInput'
+ *             $ref: '#/components/schemas/CompanySignupInput'
  *     responses:
  *       201:
- *         description: Employee created
+ *         description: Organization and owner admin created
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 message: { type: string, example: Employee created successfully }
- *                 employee: { $ref: '#/components/schemas/Employee' }
+ *                 message: { type: string, example: Organization registered successfully }
+ *                 payload:
+ *                   type: object
+ *                   properties:
+ *                     organization: { $ref: '#/components/schemas/Organization' }
+ *                     admin: { $ref: '#/components/schemas/Employee' }
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-authRouter.post("/register", eah(createEmployee));
+authRouter.post("/register", eah(register));
 
 /**
  * @openapi
@@ -39,8 +46,8 @@ authRouter.post("/register", eah(createEmployee));
  *     tags: [Auth]
  *     summary: Log in and receive an auth cookie
  *     description: >
- *       Validates credentials and, on success, sets an httpOnly `token` cookie
- *       containing the JWT used by all protected routes.
+ *       Validates credentials by email and, on success, sets an httpOnly `token`
+ *       cookie containing the JWT used by all protected routes.
  *     requestBody:
  *       required: true
  *       content:

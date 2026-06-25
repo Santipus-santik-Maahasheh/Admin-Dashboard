@@ -1,6 +1,6 @@
 // types/employee.types.ts
 
-export type Role = 'Admin' | 'Employee';
+export type Role = 'SuperAdmin' | 'Admin' | 'Employee';
 export type Status = 'Active' | 'On_Leave' | 'Terminated';
 
 export interface LeaveBalances {
@@ -16,6 +16,8 @@ export interface Employee {
   password: string;
   employeeId: string;
   role: Role;
+  // Tenant the user belongs to; null for SuperAdmin.
+  organization: string | null;
   department: string;
   designation: string;
   joiningDate: Date | string;

@@ -1,29 +1,37 @@
 import { Request, Response } from "express";
 import jwt from 'jsonwebtoken';
-import { createEmployee as createEmployeeService, loginService } from '../services/AuthService';
+import { registerOrganization, loginService } from '../services/AuthService';
 
-export const createEmployee = async (req: Request, res: Response): Promise<void> => {
-    const empDetails = req.body;
+/**
+ * Public company signup: creates an Organization and its owner Admin in one call.
+ * Role is decided server-side (always Admin here) — never read from client input.
+ */
+export const register = async (req: Request, res: Response): Promise<void> => {
+    const { organizationName, admin } = req.body ?? {};
 
-    if (!empDetails || !empDetails.email || !empDetails.name) {
-        throw new Error("Email and name are required");
+    if (!organizationName || !admin || !admin.email || !admin.name) {
+        res.status(400).json({
+            message: 'organizationName and admin (with name and email) are required',
+            payload: null,
+        });
+        return;
     }
 
-    const employee = await createEmployeeService(empDetails);
+    const result = await registerOrganization({ organizationName, admin });
     res.status(201).json({
-        message: "Employee created successfully",
-        employee
+        message: 'Organization registered successfully',
+        payload: result,
     });
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
-    const { employeeId, password } = req.body;
-    if (!employeeId || !password) {
-        res.status(400).json({ message: 'employeeId and password are required', payload: null });
+    const { email, password } = req.body;
+    if (!email || !password) {
+        res.status(400).json({ message: 'email and password are required', payload: null });
         return;
     }
 
-    const employee = await loginService(employeeId, password);
+    const employee = await loginService(email, password);
     if (!employee) {
         res.status(403).json({ message: 'login failed', payload: null });
         return;
@@ -31,7 +39,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const secret = process.env.JWT_SECRET || 'secretkey';
     const token = jwt.sign(
-        { id: employee._id || employee.id, role: employee.role, employeeId: employee.employeeId },
+        {
+            id: employee._id || employee.id,
+            role: employee.role,
+            employeeId: employee.employeeId,
+            organization: employee.organization ? String(employee.organization) : undefined,
+        },
         secret,
         { expiresIn: '1h' }
     );

@@ -9,7 +9,7 @@ export const applyLeave = async (req: AuthRequest, res: Response): Promise<void>
     }
 
     const leaveRequest = req.body;
-    const appliedLeave = await applyLeaveService(user!.id, leaveRequest);
+    const appliedLeave = await applyLeaveService(user!.id, user!.organization!, leaveRequest);
     res.status(201).json({ message: 'Leave applied successfully', payload: appliedLeave });
 };
 
@@ -30,7 +30,7 @@ export const markAttendance = async (req: AuthRequest, res: Response): Promise<v
     }
 
     const attendanceRequest = req.body;
-    const attendance = await markAttendanceService(user!.id, attendanceRequest);
+    const attendance = await markAttendanceService(user!.id, user!.organization!, attendanceRequest);
     res.status(201).json({ message: 'Attendance recorded successfully', payload: attendance });
 };
 

@@ -8,8 +8,10 @@ import { adminRouter } from './routes/Admin'
 import { empRouter } from './routes/Employee'
 import { swaggerSpec } from './config/swagger'
 import morgan from 'morgan'
+import helmet from 'helmet'
 
 const app=exp()
+app.use(helmet())
 app.use(morgan('dev'))
 app.use(cors({ origin: true, credentials: true }))
 app.use(exp.json())

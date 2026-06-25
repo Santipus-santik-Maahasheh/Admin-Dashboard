@@ -1,9 +1,14 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken' 
 
+export type Role = 'SuperAdmin' | 'Admin' | 'Employee'
+
 interface JwtPayload {
   id: string
-  role: 'admin' | 'employee' | string
+  role: Role
+  employeeId?: string
+  // Tenant the user belongs to; undefined for SuperAdmin.
+  organization?: string
 }
 
 // Extend Express Request to carry the decoded user

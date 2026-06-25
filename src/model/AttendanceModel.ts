@@ -1,10 +1,16 @@
 import { Schema, model } from 'mongoose';
 
 const attendanceSchema = new Schema({
-  employee: { 
-    type: Schema.Types.ObjectId, 
+  employee: {
+    type: Schema.Types.ObjectId,
     ref: 'Employee',
-    required: true 
+    required: true
+  },
+  // Denormalized tenant id so admin queries can scope by org without a join.
+  organization: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true
   },
   date: { 
     type: Date, 

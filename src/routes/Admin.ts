@@ -3,6 +3,7 @@ import eah from 'express-async-handler'
 import { verifyToken } from "../middleware/verifyToken";
 import {
     getAllEmployees,
+    createEmployee,
     viewAllLeaveRequests,
     approveLeaveRequest,
     rejectLeaveRequest,
@@ -34,6 +35,44 @@ export const adminRouter=Router()
  *         $ref: '#/components/responses/Unauthorized'
  */
 adminRouter.get('/employees', verifyToken, eah(getAllEmployees));
+
+/**
+ * @openapi
+ * /admin/employees:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Create a user within the organization
+ *     description: >
+ *       Admins create users (Employee or Admin) within their own organization.
+ *       A SuperAdmin must specify the target `organization`. The role is taken
+ *       from the body but restricted to Admin/Employee (SuperAdmin cannot be
+ *       created here).
+ *     security: [{ cookieAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateUserInput'
+ *     responses:
+ *       201:
+ *         description: User created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     payload: { $ref: '#/components/schemas/Employee' }
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ */
+adminRouter.post('/employees', verifyToken, eah(createEmployee));
 
 /**
  * @openapi

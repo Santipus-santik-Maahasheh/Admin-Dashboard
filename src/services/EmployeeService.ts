@@ -1,7 +1,14 @@
 import { LeaveRequestModel } from "../model/LeaveRequestModel";
 import { AttendanceModel } from "../model/AttendanceModel";
 
-export const applyLeave = async (employeeId: string, leaveData: any): Promise<any> => {
+export const applyLeave = async (
+    employeeId: string,
+    organization: string,
+    leaveData: any,
+): Promise<any> => {
+    if (!organization) {
+        throw new Error('Employee is not associated with an organization');
+    }
     if (!leaveData || typeof leaveData !== 'object') {
         throw new Error('Invalid leave data provided');
     }
@@ -22,6 +29,7 @@ export const applyLeave = async (employeeId: string, leaveData: any): Promise<an
     const leaveDoc = new LeaveRequestModel({
         ...leaveData,
         employee: employeeId,
+        organization,
         startDate: start,
         endDate: end,
         totalDays: computedTotalDays,
@@ -34,7 +42,14 @@ export const viewLeave = async (employeeId: string): Promise<any[]> => {
     return await LeaveRequestModel.find({ employee: employeeId });
 };
 
-export const markAttendance = async (employeeId: string, attendanceData: any): Promise<any> => {
+export const markAttendance = async (
+    employeeId: string,
+    organization: string,
+    attendanceData: any,
+): Promise<any> => {
+    if (!organization) {
+        throw new Error('Employee is not associated with an organization');
+    }
     if (!attendanceData || typeof attendanceData !== 'object') {
         throw new Error('Invalid attendance data provided');
     }
@@ -77,6 +92,7 @@ export const markAttendance = async (employeeId: string, attendanceData: any): P
 
     const attendanceDoc = new AttendanceModel({
         employee: employeeId,
+        organization,
         date: normalizedDate,
         clockIn: clockInDate,
         clockOut: clockOutDate,

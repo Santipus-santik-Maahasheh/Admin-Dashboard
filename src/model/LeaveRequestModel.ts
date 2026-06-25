@@ -1,9 +1,15 @@
 import { Schema, model } from 'mongoose';
 
 const leaveRequestSchema = new Schema({
-  employee: { 
-    type: Schema.Types.ObjectId, 
+  employee: {
+    type: Schema.Types.ObjectId,
     ref: 'Employee',
+    required: true
+  },
+  // Denormalized tenant id so admin queries can scope by org without a join.
+  organization: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
     required: true
   },
   leaveType: { 
@@ -26,5 +32,8 @@ const leaveRequestSchema = new Schema({
   },
   rejectionReason: { type: String }
 }, { timestamps: true });
+
+// Common admin access pattern: leaves for an org, filtered/sorted by status.
+leaveRequestSchema.index({ organization: 1, status: 1 });
 
 export const LeaveRequestModel=model('LeaveRequest',leaveRequestSchema)
