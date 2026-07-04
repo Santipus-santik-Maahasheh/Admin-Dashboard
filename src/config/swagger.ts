@@ -38,6 +38,19 @@ const options: swaggerJSDoc.Options = {
             paidTimeOff: { type: 'number', example: 15 },
           },
         },
+        Organization: {
+          type: 'object',
+          description: 'A tenant. Each customer company is one Organization.',
+          properties: {
+            _id: { type: 'string', example: '6650f0a1b2c3d4e5f6a7b8c9' },
+            name: { type: 'string', example: 'Acme Corp' },
+            slug: { type: 'string', example: 'acme-corp' },
+            status: { type: 'string', enum: ['Active', 'Suspended'], example: 'Active' },
+            owner: { type: 'string', nullable: true, description: 'Owner Admin ObjectId' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
         Employee: {
           type: 'object',
           description: 'Employee record as returned by the API (password is never included).',
@@ -46,7 +59,12 @@ const options: swaggerJSDoc.Options = {
             name: { type: 'string', example: 'Jane Doe' },
             email: { type: 'string', format: 'email', example: 'jane@company.com' },
             employeeId: { type: 'string', example: 'EMP-1001' },
-            role: { type: 'string', enum: ['Admin', 'Employee'], example: 'Employee' },
+            role: { type: 'string', enum: ['SuperAdmin', 'Admin', 'Employee'], example: 'Employee' },
+            organization: {
+              type: 'string',
+              nullable: true,
+              description: 'Organization ObjectId; null for SuperAdmin.',
+            },
             department: { type: 'string', example: 'Engineering' },
             designation: { type: 'string', example: 'Backend Developer' },
             joiningDate: { type: 'string', format: 'date-time' },
@@ -60,8 +78,9 @@ const options: swaggerJSDoc.Options = {
             updatedAt: { type: 'string', format: 'date-time' },
           },
         },
-        CreateEmployeeInput: {
+        UserDetailsInput: {
           type: 'object',
+          description: 'Common user fields. Role and organization are assigned server-side.',
           required: [
             'name',
             'email',
@@ -76,23 +95,45 @@ const options: swaggerJSDoc.Options = {
             email: { type: 'string', format: 'email', example: 'jane@company.com' },
             password: { type: 'string', format: 'password', example: 'S3curePass!' },
             employeeId: { type: 'string', example: 'EMP-1001' },
-            role: { type: 'string', enum: ['Admin', 'Employee'], default: 'Employee' },
             department: { type: 'string', example: 'Engineering' },
             designation: { type: 'string', example: 'Backend Developer' },
             joiningDate: { type: 'string', format: 'date', example: '2024-01-15' },
-            status: {
-              type: 'string',
-              enum: ['Active', 'On_Leave', 'Terminated'],
-              default: 'Active',
-            },
             leaveBalances: { $ref: '#/components/schemas/LeaveBalances' },
           },
         },
+        CompanySignupInput: {
+          type: 'object',
+          description: 'Public company signup: creates an Organization plus its owner Admin.',
+          required: ['organizationName', 'admin'],
+          properties: {
+            organizationName: { type: 'string', example: 'Acme Corp' },
+            admin: { $ref: '#/components/schemas/UserDetailsInput' },
+          },
+        },
+        CreateUserInput: {
+          type: 'object',
+          description:
+            'Admin-only user creation. role defaults to Employee; an Admin may also create Admins. ' +
+            'organization is taken from the caller automatically (SuperAdmin must supply it).',
+          allOf: [
+            { $ref: '#/components/schemas/UserDetailsInput' },
+            {
+              type: 'object',
+              properties: {
+                role: { type: 'string', enum: ['Admin', 'Employee'], default: 'Employee' },
+                organization: {
+                  type: 'string',
+                  description: 'Required only when the caller is a SuperAdmin.',
+                },
+              },
+            },
+          ],
+        },
         LoginInput: {
           type: 'object',
-          required: ['employeeId', 'password'],
+          required: ['email', 'password'],
           properties: {
-            employeeId: { type: 'string', example: 'EMP-1001' },
+            email: { type: 'string', format: 'email', example: 'jane@company.com' },
             password: { type: 'string', format: 'password', example: 'S3curePass!' },
           },
         },
@@ -101,6 +142,7 @@ const options: swaggerJSDoc.Options = {
           properties: {
             _id: { type: 'string', example: '6650b2e3d4c5f6a7b8c9d0e1' },
             employee: { type: 'string', description: 'Employee ObjectId', example: '6650a1f2c3d4e5f6a7b8c9d0' },
+            organization: { type: 'string', description: 'Organization ObjectId' },
             leaveType: { type: 'string', enum: ['Sick', 'Casual', 'PTO', 'Unpaid'] },
             startDate: { type: 'string', format: 'date-time' },
             endDate: { type: 'string', format: 'date-time' },
@@ -140,6 +182,7 @@ const options: swaggerJSDoc.Options = {
           properties: {
             _id: { type: 'string', example: '6650c3f4e5d6a7b8c9d0e1f2' },
             employee: { type: 'string', description: 'Employee ObjectId' },
+            organization: { type: 'string', description: 'Organization ObjectId' },
             date: { type: 'string', format: 'date-time' },
             clockIn: { type: 'string', format: 'date-time' },
             clockOut: { type: 'string', format: 'date-time', nullable: true },

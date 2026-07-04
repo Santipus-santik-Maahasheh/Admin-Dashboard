@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts",
     "start": "node dist/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "seed:superadmin": "ts-node src/scripts/seedSuperAdmin.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
