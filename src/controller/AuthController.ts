@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import jwt from 'jsonwebtoken';
-import { createEmployee as createEmployeeService, loginService } from '../services/BasicService';
+import { createEmployee as createEmployeeService, loginService } from '../services/AuthService';
 
 export const createEmployee = async (req: Request, res: Response): Promise<void> => {
     const empDetails = req.body;
@@ -16,15 +16,17 @@ export const createEmployee = async (req: Request, res: Response): Promise<void>
     });
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<void> => {
     const { employeeId, password } = req.body;
     if (!employeeId || !password) {
-        return res.status(400).json({ message: 'employeeId and password are required', payload: null });
+        res.status(400).json({ message: 'employeeId and password are required', payload: null });
+        return;
     }
 
     const employee = await loginService(employeeId, password);
     if (!employee) {
-        return res.status(403).json({ message: 'login failed', payload: null });
+        res.status(403).json({ message: 'login failed', payload: null });
+        return;
     }
 
     const secret = process.env.JWT_SECRET || 'secretkey';
@@ -41,5 +43,5 @@ export const login = async (req: Request, res: Response) => {
         maxAge: 60 * 60 * 1000,
     });
 
-    return res.status(200).json({ message: 'login Success', payload: employee });
+    res.status(200).json({ message: 'login Success', payload: employee });
 };
